@@ -1,0 +1,71 @@
+FROM nvidia/cuda:10.0-cudnn7-devel-ubuntu16.04
+
+ENV \
+  PACKAGES="\
+    git \
+    cmake \
+    vim \
+    make \
+    wget \
+    gnupg \
+    build-essential \
+    software-properties-common \
+    gdb \
+    zip \
+    " \
+  VNC_PACKAGES="\
+    xfce4 \
+    xfce4-goodies \
+    tightvncserver \
+  " \
+  PYTHON_PACKAGES="\
+    libreadline-gplv2-dev \
+    libncursesw5-dev \
+    libssl-dev \
+    libsqlite3-dev \
+    tk-dev \
+    libgdbm-dev \
+    libc6-dev \
+    libbz2-dev \
+    python3-pip \
+    libffi-dev \
+    " \
+  PYTHON_VERSION="3.7.2" \
+  VNC_PASSWORD="123456"
+
+RUN \
+  apt update -y \
+  && DEBIAN_FRONTEND=noninteractive apt install -y $PACKAGES $VNC_PACKAGES $PYTHON_PACKAGES \
+  # python install
+  && cd /tmp \
+  && wget https://www.python.org/ftp/python/$PYTHON_VERSION/Python-$PYTHON_VERSION.tgz \
+  && tar xzf Python-$PYTHON_VERSION.tgz \
+  && cd Python-$PYTHON_VERSION \
+  && ./configure --enable-optimizations \
+  && make \
+  && make install \
+  && ln -s /usr/local/bin/python3 /usr/local/bin/python \
+  && ln -s /usr/bin/pip3 /usr/bin/pip \
+  # Install Miniconda
+  wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
+  && chmod +x miniconda.sh \
+  && bash ./miniconda.sh -b -p ~/local/miniconda \
+  && rm -f ./miniconda.sh \
+  # miniconda activate
+  && ln -s ~/local/miniconda/bin/activate /activate \
+  # Install PyTorch
+  && . /activate && conda install pytorch -c pytorch \
+  # VNC settings
+  && mkdir ~/.vnc \
+  && echo $VNC_PASSWORD | vncpasswd -f >> ~/.vnc/passwd \
+  && chmod 600 ~/.vnc/passwd \
+  # cleaner
+  && rm -f Python-$PYTHON_VERSION.tgz \
+  && apt remove -y $PYTHON_PACKAGES \
+  && apt autoremove -y && apt clean && apt-get purge -y pm-utils xscreensaver*
+
+# Download LibTorch
+#RUN wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+#RUN unzip libtorch-shared-with-deps-latest.zip && rm libtorch-shared-with-deps-latest.zip
+
+WORKDIR /home
