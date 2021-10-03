@@ -1,0 +1,24 @@
+FROM test-packets-main:latest
+
+RUN \
+  # python install
+  apt install -y $PYTHON_PACKAGES libffi-dev \
+  && cd /tmp \
+  && wget https://www.python.org/ftp/python/$python_version/Python-$python_version.tgz \
+  && tar xzf Python-$python_version.tgz \
+  && cd Python-$python_version \
+  && ./configure --enable-optimizations \
+  && make \
+  && make install \
+  && ln -s /usr/local/bin/python3 /usr/local/bin/python \
+  && ln -s /usr/bin/pip3 /usr/bin/pip \
+  # cleaner
+  && apt remove -y $PYTHON_PACKAGES libffi-dev \
+  # cleaner
+  && apt autoremove -y && apt clean && apt-get purge -y pm-utils xscreensaver*
+
+# Download LibTorch
+#RUN wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+#RUN unzip libtorch-shared-with-deps-latest.zip && rm libtorch-shared-with-deps-latest.zip
+
+WORKDIR /home

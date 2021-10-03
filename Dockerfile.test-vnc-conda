@@ -1,0 +1,26 @@
+FROM test-python:latest
+
+ENV VNC_PASSWORD="123456"
+
+RUN \
+  # Install Miniconda
+  wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh \
+  && chmod +x miniconda.sh \
+  && bash ./miniconda.sh -b -p ~/local/miniconda \
+  && rm -f ./miniconda.sh \
+  # miniconda activate
+  && ln -s ~/local/miniconda/bin/activate /activate \
+  # Install PyTorch
+  && . /activate && conda install pytorch -c pytorch \
+  # vnc
+  && mkdir ~/.vnc \
+  && echo $VNC_PASSWORD | vncpasswd -f >> ~/.vnc/passwd \
+  && chmod 600 ~/.vnc/passwd \
+  # cleaner
+  && apt autoremove -y && apt clean && apt-get purge -y pm-utils xscreensaver*
+
+# Download LibTorch
+#RUN wget https://download.pytorch.org/libtorch/nightly/cpu/libtorch-shared-with-deps-latest.zip
+#RUN unzip libtorch-shared-with-deps-latest.zip && rm libtorch-shared-with-deps-latest.zip
+
+WORKDIR /home
